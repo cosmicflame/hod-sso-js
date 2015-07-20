@@ -71,7 +71,7 @@
     }
 
     /**
-     * Get a request to HOD signed by the ISO backend.
+     * Get a request to HOD signed by the application backend.
      * @param url
      * @param callback Called with an error if there was one or null and a {@link SignedRequest}.
      */
@@ -100,7 +100,7 @@
      */
     /**
      * @typedef {Object} AuthenticateCombinedOptions
-     * @property {string} [searchoptimizerRoot] Root path of ISO
+     * @property {string} applicationRoot Root path of application
      * @property {string} [hodDomain] HOD Domain, defaults to idolondemand.com
      * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://idolondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
      * @property {SignedRequest} [listApplicationRequest] A signed request to get a list of applications
@@ -110,13 +110,13 @@
      * If the authentication fails, the callback is called with an error. If not, it is called with null and a combined
      * token.
      * @param {Function} callback Called with an error if there was one, or with null and a {@link AuthenticateCombinedOutput}.
-     * @param {AuthenticateCombinedOptions} [options] Optional options
+     * @param {AuthenticateCombinedOptions} options Configuration options
      */
     function authenticateCombined(callback, options) {
         options = options || {};
-        var searchoptimizerRoot = options.searchoptimizerRoot || '/searchoptimizer';
+        var applicationRoot = options.applicationRoot;
         var hodDomain = options.hodDomain || 'idolondemand.com';
-        var ssoPage = options.ssoPage || ['https://',hodDomain,'/sso.html'].join('');
+        var ssoPage = options.ssoPage || ['https://', hodDomain, '/sso.html'].join('');
 
         function handleHodErrorResponse(error, response, callback) {
             if (response && response.error === NO_USER_TOKEN_CODE) {
@@ -145,7 +145,7 @@
                         'user-store-name': response[0].users[0].userStore
                     };
 
-                    getSignedRequest(searchoptimizerRoot + '/api/combined-request?' + buildQueryString(combinedTokenParameters), function(error, combinedRequest) {
+                    getSignedRequest(applicationRoot + '/api/combined-request?' + buildQueryString(combinedTokenParameters), function(error, combinedRequest) {
                         if (error) {
                             callback(error);
                         } else {
@@ -173,7 +173,7 @@
         if (options.listApplicationRequest) {
             authenticate(options.listApplicationRequest);
         } else {
-            getSignedRequest(searchoptimizerRoot + '/api/list-application-request', function(error, listApplicationRequest) {
+            getSignedRequest(applicationRoot + '/api/list-application-request', function(error, listApplicationRequest) {
                 if (error) {
                     callback(error);
                 } else {
@@ -183,6 +183,6 @@
         }
     }
 
-    window.haven_search = window.haven_search || {};
-    window.haven_search.authenticate = authenticateCombined;
+    window.havenOnDemandSso = window.havenOnDemandSso || {};
+    window.havenOnDemandSso.authenticate = authenticateCombined;
 })();

@@ -1,13 +1,13 @@
 (function() {
     var CONFIG = JSON.parse(document.getElementById('config-json').textContent);
-    var searchoptimizerRoot = location.pathname.substring(0, location.pathname.lastIndexOf(CONFIG.ssoEntryPage));
+    var applicationRoot = location.pathname.substring(0, location.pathname.lastIndexOf(CONFIG.ssoEntryPage));
 
     window.addEventListener('load', function() {
         var form = document.getElementById('authenticate-form');
 
-        window.haven_search.authenticate(function(errorStatus, output) {
+        window.havenOnDemandSso.authenticate(function(errorStatus, output) {
             if (errorStatus) {
-                location = searchoptimizerRoot + CONFIG.errorPage + '?statusCode=' + errorStatus;
+                location = applicationRoot + CONFIG.errorPage + '?statusCode=' + errorStatus;
             } else {
                 var combinedToken = output.combinedToken;
                 var inputsFragment = document.createDocumentFragment();
@@ -25,10 +25,10 @@
             }
         }, {
             listApplicationRequest: CONFIG.listApplicationRequest,
-            searchoptimizerRoot: searchoptimizerRoot,
+            applicationRoot: applicationRoot,
             ssoPage: CONFIG.ssoPage
         });
 
-        form.setAttribute("action", searchoptimizerRoot + CONFIG.authenticatePath);
+        form.setAttribute("action", applicationRoot + CONFIG.authenticatePath);
     });
 })();
