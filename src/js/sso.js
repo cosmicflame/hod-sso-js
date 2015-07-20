@@ -7,7 +7,7 @@
 
         window.havenOnDemandSso.authenticate(function(errorStatus, output) {
             if (errorStatus) {
-                location = applicationRoot + CONFIG.errorPage + '?statusCode=' + errorStatus;
+                window.location = applicationRoot + CONFIG.errorPage + '?statusCode=' + errorStatus;
             } else {
                 var combinedToken = output.combinedToken;
                 var inputsFragment = document.createDocumentFragment();
