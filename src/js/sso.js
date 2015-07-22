@@ -4,6 +4,8 @@
  * @property {string} errorPage The error page to redirect to if there is an error. This page will be passed a
  * statusCode query parameter
  * @property {string} [ssoPage] The URL of the HP Haven OnDemand SSO page
+ * @property {string} [combinedRequestApi] The URI to obtain the signed authentication request from
+ * @property {string} [listApplicationRequestApi] The URI to obtain the signed list application request from
  * @property {SignedRequest} [listApplicationRequest] The request to be made to list the available applications
  */
 /**
@@ -46,7 +48,9 @@
         }, {
             listApplicationRequest: CONFIG.listApplicationRequest,
             applicationRoot: applicationRoot,
-            ssoPage: CONFIG.ssoPage
+            ssoPage: CONFIG.ssoPage,
+            combinedRequestApi: CONFIG.combinedRequestApi,
+            listApplicationRequestApi: CONFIG.listApplicationRequestApi
         });
 
         form.setAttribute("action", applicationRoot + CONFIG.authenticatePath);
