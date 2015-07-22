@@ -104,6 +104,8 @@
      * @property {string} [hodDomain] HOD Domain, defaults to idolondemand.com
      * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://idolondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
      * @property {SignedRequest} [listApplicationRequest] A signed request to get a list of applications
+     * @property {string} [combinedRequestApi=/api/combined-request] The URI to obtain the signed authentication request from
+     * @property {string} [listApplicationRequestApi=/api/list-application-request] The URI to obtain the signed list application request from
      */
     /**
      * Attempt to authenticate the user using SSO. If the user is not signed in, redirects the browser to the SSO page.
@@ -117,6 +119,8 @@
         var applicationRoot = options.applicationRoot;
         var hodDomain = options.hodDomain || 'idolondemand.com';
         var ssoPage = options.ssoPage || ['https://', hodDomain, '/sso.html'].join('');
+        var combinedRequestApi = options.combinedRequestApi || '/api/combined-request';
+        var listApplicationRequestApi = options.listApplicationRequestApi || '/api/list-application-request';
 
         function handleHodErrorResponse(error, response, callback) {
             if (response && response.error === NO_USER_TOKEN_CODE) {
@@ -145,7 +149,7 @@
                         'user-store-name': response[0].users[0].userStore
                     };
 
-                    getSignedRequest(applicationRoot + '/api/combined-request?' + buildQueryString(combinedTokenParameters), function(error, combinedRequest) {
+                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function(error, combinedRequest) {
                         if (error) {
                             callback(error);
                         } else {
@@ -173,7 +177,7 @@
         if (options.listApplicationRequest) {
             authenticate(options.listApplicationRequest);
         } else {
-            getSignedRequest(applicationRoot + '/api/list-application-request', function(error, listApplicationRequest) {
+            getSignedRequest(applicationRoot + listApplicationRequestApi, function(error, listApplicationRequest) {
                 if (error) {
                     callback(error);
                 } else {
