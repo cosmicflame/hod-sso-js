@@ -1,7 +1,10 @@
-(function() {
+(function () {
     /*jshint camelcase: false */
 
     var XHR_DONE_STATE = 4;
+
+    var HTTP_AUTHENTICATION_ERROR = 401;
+    var HTTP_SERVER_ERROR = 500;
 
     /**
      * The error code returned by HOD when there is no SSO cookie.
@@ -15,7 +18,7 @@
      * @return {string}
      */
     function buildQueryString(parameters) {
-        return Object.keys(parameters).map(function(name) {
+        return Object.keys(parameters).map(function (name) {
             return encodeURIComponent(name) + '=' + encodeURIComponent(parameters[name]);
         }).join('&');
     }
@@ -27,7 +30,7 @@
      * @param {Function} callback Called with an error response and status if there is one or null and the parsed response
      */
     function addReadyStateChangeListener(xhr, callback) {
-        xhr.addEventListener('readystatechange', function() {
+        xhr.addEventListener('readystatechange', function () {
             if (xhr.readyState === XHR_DONE_STATE) {
                 var response;
 
@@ -133,9 +136,11 @@
 
         function authenticate(listApplicationRequest) {
             // Get a list of applications and users which match the authentication
-            makeSignedRequest(listApplicationRequest, function(error, response) {
+            makeSignedRequest(listApplicationRequest, function (error, response) {
                 if (error) {
                     handleHodErrorResponse(error, response, callback);
+                } else if (!response.length || !response[0].users.length) { // for a case when there is no user authorized for this application
+                    handleHodErrorResponse(HTTP_AUTHENTICATION_ERROR, null, callback);
                 } else {
                     // TODO: Allow user to choose application and user store names and domains
                     var domain = response[0].domain;
@@ -149,12 +154,12 @@
                         'user-store-name': response[0].users[0].userStore
                     };
 
-                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function(error, combinedRequest) {
+                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function (error, combinedRequest) {
                         if (error) {
                             callback(error);
                         } else {
                             // Obtain a combined token
-                            makeSignedRequest(combinedRequest, function(error, response) {
+                            makeSignedRequest(combinedRequest, function (error, response) {
                                 if (error) {
                                     handleHodErrorResponse(error, response, callback);
                                 } else {
@@ -177,7 +182,7 @@
         if (options.listApplicationRequest) {
             authenticate(options.listApplicationRequest);
         } else {
-            getSignedRequest(applicationRoot + listApplicationRequestApi, function(error, listApplicationRequest) {
+            getSignedRequest(applicationRoot + listApplicationRequestApi, function (error, listApplicationRequest) {
                 if (error) {
                     callback(error);
                 } else {
