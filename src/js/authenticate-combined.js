@@ -137,48 +137,44 @@
         function authenticate(listApplicationRequest) {
             // Get a list of applications and users which match the authentication
             makeSignedRequest(listApplicationRequest, function (error, response) {
-                try {
-                    if (error) {
-                        handleHodErrorResponse(error, response, callback);
-                    } else if (!!response && response.length == 0) { //for a case when there is no user authorized for this application
-                        handleHodErrorResponse(HTTP_AUTHENTICATION_ERROR, null, callback);
-                    } else {
-                        // TODO: Allow user to choose application and user store names and domains
-                        var domain = response[0].domain;
-                        var application = response[0].name;
-                        var username = response[0].users[0].name;
+                if (error) {
+                    handleHodErrorResponse(error, response, callback);
+                } else if (!response.length || !response[0].users.length) { // for a case when there is no user authorized for this application
+                    handleHodErrorResponse(HTTP_AUTHENTICATION_ERROR, null, callback);
+                } else {
+                    // TODO: Allow user to choose application and user store names and domains
+                    var domain = response[0].domain;
+                    var application = response[0].name;
+                    var username = response[0].users[0].name;
 
-                        var combinedTokenParameters = {
-                            domain: domain,
-                            application: application,
-                            'user-store-domain': response[0].users[0].domain,
-                            'user-store-name': response[0].users[0].userStore
-                        };
+                    var combinedTokenParameters = {
+                        domain: domain,
+                        application: application,
+                        'user-store-domain': response[0].users[0].domain,
+                        'user-store-name': response[0].users[0].userStore
+                    };
 
-                        getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function (error, combinedRequest) {
-                            if (error) {
-                                callback(error);
-                            } else {
-                                // Obtain a combined token
-                                makeSignedRequest(combinedRequest, function (error, response) {
-                                    if (error) {
-                                        handleHodErrorResponse(error, response, callback);
-                                    } else {
-                                        var combinedToken = response.token;
+                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function (error, combinedRequest) {
+                        if (error) {
+                            callback(error);
+                        } else {
+                            // Obtain a combined token
+                            makeSignedRequest(combinedRequest, function (error, response) {
+                                if (error) {
+                                    handleHodErrorResponse(error, response, callback);
+                                } else {
+                                    var combinedToken = response.token;
 
-                                        callback(null, {
-                                            application: application,
-                                            domain: domain,
-                                            username: username,
-                                            combinedToken: combinedToken
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                } catch (e) { //exception handling to catch any out of flow errors
-                    handleHodErrorResponse(HTTP_SERVER_ERROR, null, callback);
+                                    callback(null, {
+                                        application: application,
+                                        domain: domain,
+                                        username: username,
+                                        combinedToken: combinedToken
+                                    });
+                                }
+                            });
+                        }
+                    });
                 }
             });
         }
