@@ -1,6 +1,4 @@
 (function () {
-    /*jshint camelcase: false */
-
     var XHR_DONE_STATE = 4;
 
     var HTTP_AUTHENTICATION_ERROR = 401;
