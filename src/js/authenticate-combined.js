@@ -4,7 +4,6 @@
     var XHR_DONE_STATE = 4;
 
     var HTTP_AUTHENTICATION_ERROR = 401;
-    var HTTP_SERVER_ERROR = 500;
 
     /**
      * The error code returned by HOD when there is no SSO cookie.
