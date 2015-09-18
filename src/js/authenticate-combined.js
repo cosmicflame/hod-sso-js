@@ -101,8 +101,8 @@
     /**
      * @typedef {Object} AuthenticateCombinedOptions
      * @property {string} applicationRoot Root path of application
-     * @property {string} [hodDomain] HOD Domain, defaults to idolondemand.com
-     * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://idolondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
+     * @property {string} [hodDomain] HOD Domain, defaults to havenondemand.com
+     * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://dev.havenondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
      * @property {SignedRequest} [listApplicationRequest] A signed request to get a list of applications
      * @property {string} [combinedRequestApi=/api/combined-request] The URI to obtain the signed authentication request from
      * @property {string} [listApplicationRequestApi=/api/list-application-request] The URI to obtain the signed list application request from
@@ -117,8 +117,8 @@
     function authenticateCombined(callback, options) {
         options = options || {};
         var applicationRoot = options.applicationRoot;
-        var hodDomain = options.hodDomain || 'idolondemand.com';
-        var ssoPage = options.ssoPage || ['https://', hodDomain, '/sso.html'].join('');
+        var hodDomain = options.hodDomain || 'havenondemand.com';
+        var ssoPage = options.ssoPage || 'https://dev.' + hodDomain + '/sso.html';
         var combinedRequestApi = options.combinedRequestApi || '/api/combined-request';
         var listApplicationRequestApi = options.listApplicationRequestApi || '/api/list-application-request';
 
