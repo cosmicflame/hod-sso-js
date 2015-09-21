@@ -6,15 +6,16 @@ The library can be installed using bower:
 
     bower install hp-autonomy-hod-sso-js
 
-The library consists of two files. 
+The library contains the following files:
 
-* src/js/authenticate-combined exposes a function named authenticate on the global
-havenOnDemandSso. This function makes a signed request to HP Haven OnDemand to retrieve a combined token. Consult the
-JSDoc in the file for more information
-* src/js/sso posts the token returned from havenOnDemandSso.authenticate to your server by generating and submitting a
+* src/js/authenticate-combined.js exposes a property named havenOnDemandSso on the window, which has methods for authenticating
+and logging out of HOD SSO
+* src/js/sso.js posts the token returned from havenOnDemandSso.authenticate to your server by generating and submitting a
 form
+* src/js/logout-sso.js reads a combined token from a request parameter and uses the havenOnDemand.logout method to log
+the user out of HOD SSO
 
-You may prefer to use your own equivalent of sso.js depending on your application
+You may prefer to use your own equivalent of sso.js and logout-sso.js depending on your application.
 
 # Is it any good?
 Yes

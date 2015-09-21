@@ -1,10 +1,11 @@
+/*
+ * Copyright 2015 Hewlett-Packard Development Company, L.P.
+ * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+ */
 (function () {
-    /*jshint camelcase: false */
-
     var XHR_DONE_STATE = 4;
-
     var HTTP_AUTHENTICATION_ERROR = 401;
-    var HTTP_SERVER_ERROR = 500;
+    var DEFAULT_HOD_DOMAIN = 'havenondemand.com';
 
     /**
      * The error code returned by HOD when there is no SSO cookie.
@@ -102,10 +103,10 @@
      * @property {string} body Request body if there is one, null if not
      */
     /**
-     * @typedef {Object} AuthenticateCombinedOptions
+     * @typedef {Object} AuthenticateOptions
      * @property {string} applicationRoot Root path of application
-     * @property {string} [hodDomain] HOD Domain, defaults to idolondemand.com
-     * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://idolondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
+     * @property {string} [hodDomain] HOD Domain, defaults to havenondemand.com
+     * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://dev.havenondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
      * @property {SignedRequest} [listApplicationRequest] A signed request to get a list of applications
      * @property {string} [combinedRequestApi=/api/combined-request] The URI to obtain the signed authentication request from
      * @property {string} [listApplicationRequestApi=/api/list-application-request] The URI to obtain the signed list application request from
@@ -115,13 +116,13 @@
      * If the authentication fails, the callback is called with an error. If not, it is called with null and a combined
      * token.
      * @param {Function} callback Called with an error if there was one, or with null and a {@link AuthenticateCombinedOutput}.
-     * @param {AuthenticateCombinedOptions} options Configuration options
+     * @param {AuthenticateOptions} options Configuration options
      */
-    function authenticateCombined(callback, options) {
+    function authenticate(callback, options) {
         options = options || {};
         var applicationRoot = options.applicationRoot;
-        var hodDomain = options.hodDomain || 'idolondemand.com';
-        var ssoPage = options.ssoPage || ['https://', hodDomain, '/sso.html'].join('');
+        var hodDomain = options.hodDomain || DEFAULT_HOD_DOMAIN;
+        var ssoPage = options.ssoPage || 'https://dev.' + hodDomain + '/sso.html';
         var combinedRequestApi = options.combinedRequestApi || '/api/combined-request';
         var listApplicationRequestApi = options.listApplicationRequestApi || '/api/list-application-request';
 
@@ -192,6 +193,34 @@
         }
     }
 
+    /**
+     * @typedef {Object} LogoutOptions
+     * @property {String} combinedToken The combined token string to use to log out
+     * @property {String} [hodDomain=havenondemand.com] Domain for Haven OnDemand endpoint
+     * @property {String} [hodEndpoint=https://api.havenondemand.com] Haven OnDemand endpoint, overrides the hodDomain
+     * if supplied
+     * @property {String} [logoutUrl=https://api.havenondemand.com/2/authenticate/combined] URL for the logout request,
+     * overrides the hodEndpoint if supplied
+     */
+    /**
+     * Attempt to log the user out using SSO, calling the callback when the process completes.
+     * @param {Function} callback Called with an error if there was one or with null and the response object
+     * @param {LogoutOptions} options
+     */
+    function logout(callback, options) {
+        var hodDomain = options.hodDomain || DEFAULT_HOD_DOMAIN;
+        var hodEndpoint = options.hodEndpoint || 'https://api.' + hodDomain;
+        var logoutUrl = options.logoutUrl || hodEndpoint + '/2/authenticate/combined';
+
+        var xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.open('DELETE', logoutUrl);
+        xhr.setRequestHeader('token', options.combinedToken);
+        addReadyStateChangeListener(xhr, callback);
+        xhr.send();
+    }
+
     window.havenOnDemandSso = window.havenOnDemandSso || {};
-    window.havenOnDemandSso.authenticate = authenticateCombined;
+    window.havenOnDemandSso.authenticate = authenticate;
+    window.havenOnDemandSso.logout = logout;
 })();
