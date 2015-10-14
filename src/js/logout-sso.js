@@ -13,13 +13,16 @@
 (function() {
     // captures the value of the first token parameter
     // the token parameter is preceded by ? or &, and the value will not contain &
+    var regexResult = location.search.match(/[?&]token=([^&]+)/);
+
     // match returns the whole string as [0] and the captured group as [1]
-    var encodedToken = location.search.match(/[?&]token=([^&]+)/)[1];
+    if (regexResult && regexResult[1]) {
+        var combinedToken = decodeURIComponent(regexResult[1]);
+        var CONFIG = JSON.parse(document.getElementById('config-json').textContent);
 
-    var CONFIG = JSON.parse(document.getElementById('config-json').textContent);
-
-    window.havenOnDemandSso.logout(function() {}, {
-        combinedToken: decodeURIComponent(encodedToken),
-        hodEndpoint: CONFIG.endpoint
-    });
+        window.havenOnDemandSso.logout(function() {}, {
+            combinedToken: combinedToken,
+            hodEndpoint: CONFIG.endpoint
+        });
+    }
 })();
