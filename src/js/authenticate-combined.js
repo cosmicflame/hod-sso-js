@@ -145,14 +145,19 @@
                 } else {
                     // TODO: Allow user to choose application and user store names and domains
                     var application = {
+                        description: response[0].description,
                         domain: response[0].domain,
+                        domainDescription: response[0].domainDescription,
                         name: response[0].name
                     };
 
                     var userStore = {
                         domain: response[0].users[0].domain,
-                        name: response[0].users[0].userStore
+                        name: response[0].users[0].userStore,
+                        domainDescription: response[0].users[0].domainDescription
                     };
+
+                    var accounts = response[0].users[0].accounts;
 
                     var combinedTokenParameters = {
                         domain: application.domain,
@@ -173,6 +178,7 @@
                                     var combinedToken = response.token;
 
                                     callback(null, {
+                                        accounts: accounts,
                                         application: application,
                                         userStore: userStore,
                                         combinedToken: combinedToken
