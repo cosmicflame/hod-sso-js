@@ -144,15 +144,26 @@
                     handleHodErrorResponse(HTTP_AUTHENTICATION_ERROR, null, callback);
                 } else {
                     // TODO: Allow user to choose application and user store names and domains
-                    var domain = response[0].domain;
-                    var application = response[0].name;
-                    var username = response[0].users[0].name;
+                    var application = {
+                        description: response[0].description,
+                        domain: response[0].domain,
+                        domainDescription: response[0].domainDescription,
+                        name: response[0].name
+                    };
+
+                    var userStore = {
+                        domain: response[0].users[0].domain,
+                        name: response[0].users[0].userStore,
+                        domainDescription: response[0].users[0].domainDescription
+                    };
+
+                    var accounts = response[0].users[0].accounts;
 
                     var combinedTokenParameters = {
-                        domain: domain,
-                        application: application,
-                        'user-store-domain': response[0].users[0].domain,
-                        'user-store-name': response[0].users[0].userStore
+                        domain: application.domain,
+                        application: application.name,
+                        'user-store-domain': userStore.domain,
+                        'user-store-name': userStore.name
                     };
 
                     getSignedRequest(applicationRoot + combinedRequestApi + '?' + buildQueryString(combinedTokenParameters), function (error, combinedRequest) {
@@ -167,9 +178,9 @@
                                     var combinedToken = response.token;
 
                                     callback(null, {
+                                        accounts: accounts,
                                         application: application,
-                                        domain: domain,
-                                        username: username,
+                                        userStore: userStore,
                                         combinedToken: combinedToken
                                     });
                                 }
