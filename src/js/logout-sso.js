@@ -5,6 +5,7 @@
 /**
  * @typedef {Object} LogoutConfig
  * @property {String} endpoint The Haven OnDemand API endpoint (eg: https://api.havenondemand.com)
+ * @property {String} [redirectUrl] URL to redirect to after logout completes
  */
 /**
  * Script for logging the user out of Haven OnDemand. The combined token is obtained from the "token" query parameter,
@@ -20,7 +21,11 @@
         var combinedToken = decodeURIComponent(regexResult[1]);
         var CONFIG = JSON.parse(document.getElementById('config-json').textContent);
 
-        window.havenOnDemandSso.logout(function() {}, {
+        window.havenOnDemandSso.logout(function() {
+            if (CONFIG.redirectUrl) {
+                window.location.replace(CONFIG.redirectUrl);
+            }
+        }, {
             combinedToken: combinedToken,
             hodEndpoint: CONFIG.endpoint
         });
