@@ -40,7 +40,7 @@
                 } else if (error.type === window.havenOnDemandSso.ERROR_TYPES.NO_USERS_AUTHORISED) {
                     window.location = applicationRoot + CONFIG.errorPage + '?statusCode=403';
                 } else {
-                    window.location = applicationRoot + CONFIG.errorPage + '?statusCode=' + error;
+                    window.location = applicationRoot + CONFIG.errorPage + '?statusCode=' + error.status;
                 }
             } else {
                 var combinedToken = output.combinedToken;
