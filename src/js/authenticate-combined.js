@@ -187,6 +187,7 @@
      * @property {Object} combinedToken
      */
     /**
+     * If listApplicationRequest is provided, the listApplicationRequestApi endpoint will not be called.
      * @typedef {Object} AuthenticateOptions
      * @property {string} applicationRoot Root path of application
      * @property {string} [hodDomain] HOD Domain, defaults to havenondemand.com

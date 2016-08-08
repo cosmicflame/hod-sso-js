@@ -10,18 +10,19 @@
  * @property {string} cookieErrorPage The error page to redirect to if the browser has blocked cross-domain cookies
  * @property {string} [ssoPage] The URL of the HP Haven OnDemand SSO page
  * @property {string} [combinedRequestApi] The URI to obtain the signed authentication request from
- * @property {string} [listApplicationRequestApi] The URI to obtain the signed list application request from
- * @property {SignedRequest} [listApplicationRequest] The request to be made to list the available applications
+ * @property {SignedRequest} listApplicationRequest The request to be made to list the available applications
  */
 /**
  * Script for obtaining a combined token from HP Haven OnDemand and sending it to your server. This script will read the
- * contents of the element with id 'config-json' and use it as its configuration. A script tag with type
- * 'application/json' is best used for this purpose.
+ * contents of the element with id 'config-json' and use it as its configuration. A script tag with type 'application/json'
+ * is best used for this purpose.
  *
- * Once authentication has occurred the components of the token
- * received from HP Haven OnDemand will be appended to the form with id 'authenticate-form', and this form will be
- * submitted, allowing your application to use the combined token. This form must exist on the document and should
- * already contain any other inputs you need to submit to your server.
+ * This script assumes that the application serving it has the same domain as the combinedRequestApi, so applicationRoot
+ * is built by subtracting ssoEntryPage from the current URL.
+ *
+ * Once authentication has occurred the components of the token received from HP Haven OnDemand will be appended to the
+ * form with id 'authenticate-form', and this form will be submitted, allowing your application to use the combined token.
+ * This form must exist on the document and should already contain any other inputs you need to submit to your server.
  *
  * The configuration should of type SsoConfig.
  */
@@ -61,8 +62,7 @@
             listApplicationRequest: CONFIG.listApplicationRequest,
             applicationRoot: applicationRoot,
             ssoPage: CONFIG.ssoPage,
-            combinedRequestApi: CONFIG.combinedRequestApi,
-            listApplicationRequestApi: CONFIG.listApplicationRequestApi
+            combinedRequestApi: CONFIG.combinedRequestApi
         });
 
         form.setAttribute("action", applicationRoot + CONFIG.authenticatePath);
