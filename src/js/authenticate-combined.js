@@ -209,7 +209,6 @@
      * @param {AuthenticateOptions} options Configuration options
      */
     function authenticate(callback, options) {
-        options = options || {};
         var applicationRoot = options.applicationRoot;
         var hodDomain = options.hodDomain || DEFAULT_HOD_DOMAIN;
         var ssoPage = options.ssoPage || 'https://dev.' + hodDomain + '/sso.html';
