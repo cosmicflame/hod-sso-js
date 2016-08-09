@@ -8,13 +8,13 @@
 
     /**
      * This script assumes that if the page has this query parameter, the user has already been to the SSO page.
-     * @type {String}
+     * @type {string}
      */
     var AUTHENTICATED_PARAMETER = 'authenticated';
 
     /**
      * Used for query parameter values.
-     * @type {String}
+     * @type {string}
      */
     var TRUE_STRING = 'true';
 
@@ -26,7 +26,7 @@
 
     /**
      * Possible values of the type property for {@link SsoError}s called back from functions exposed by this script.
-     * @enum {String}
+     * @enum {string}
      * @readonly
      */
     var ERROR_TYPES = {
@@ -55,8 +55,8 @@
 
     /**
      * Parse a location search string (eg "?foo=1&bar=cat&bar=dog") into an object of string keys to an array of values.
-     * @param {String} search
-     * @return {Object<String, String[]>}
+     * @param {string} search
+     * @return {Object<string, string[]>}
      */
     function parseQueryString(search) {
         if (search === '') {
@@ -79,8 +79,8 @@
 
     /**
      * Build a URL encoded query string from a map of key to values.
-     * @param {Object.<String, String[]>} parameters
-     * @return {String}
+     * @param {Object.<string, string[]>} parameters
+     * @return {string}
      */
     function buildQueryString(parameters) {
         return Object.keys(parameters)
@@ -100,7 +100,7 @@
      * Add a ready state change listener to an XMLHttpRequest. When the request is done, the callback is called. Assumes
      * a JSON response.
      * @param {XMLHttpRequest} xhr
-     * @param {String} errorType The type of error to return if a non-200 response is received {@link ERROR_TYPES}
+     * @param {string} errorType The type of error to return if a non-200 response is received {@link ERROR_TYPES}
      * @param {Function} callback Called with an error response and status if there is one or null and the parsed response
      */
     function addReadyStateChangeListener(xhr, errorType, callback) {
@@ -174,8 +174,8 @@
      */
     /**
      * @typedef {Object} SsoError
-     * @property {String} type One of {@link ERROR_TYPES}
-     * @property {Number} [status] Status code of the HTTP request which failed, if there was one
+     * @property {string} type One of {@link ERROR_TYPES}
+     * @property {number} [status] Status code of the HTTP request which failed, if there was one
      * @property {Object} [response] Response of the HTTP request which failed, if there was one
      */
 
@@ -314,11 +314,11 @@
 
     /**
      * @typedef {Object} LogoutOptions
-     * @property {String} combinedToken The combined token string to use to log out
-     * @property {String} [hodDomain=havenondemand.com] Domain for Haven OnDemand endpoint
-     * @property {String} [hodEndpoint=https://api.havenondemand.com] Haven OnDemand endpoint, overrides the hodDomain
+     * @property {string} combinedToken The combined token string to use to log out
+     * @property {string} [hodDomain=havenondemand.com] Domain for Haven OnDemand endpoint
+     * @property {string} [hodEndpoint=https://api.havenondemand.com] Haven OnDemand endpoint, overrides the hodDomain
      * if supplied
-     * @property {String} [logoutUrl=https://api.havenondemand.com/2/authenticate/combined] URL for the logout request,
+     * @property {string} [logoutUrl=https://api.havenondemand.com/2/authenticate/combined] URL for the logout request,
      * overrides the hodEndpoint if supplied
      */
     /**
