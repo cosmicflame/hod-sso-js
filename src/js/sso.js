@@ -7,9 +7,10 @@
  * @property {string} ssoEntryPage The page which is using this script
  * @property {string} errorPage The error page to redirect to if there is an error. This page will be passed a
  * statusCode query parameter
- * @property {string} cookieErrorPage The error page to redirect to if the browser has blocked cross-domain cookies
+ * @property {string} authenticatePath The URI to post the combined token to once authentication is complete
  * @property {string} [ssoPage] The URL of the HP Haven OnDemand SSO page
- * @property {string} [combinedRequestApi] The URI to obtain the signed authentication request from
+ * @property {string} combinedRequestApi The URI to obtain the signed authentication request from
+ * @property {string} combinedPatchRequestApi The URI to obtain the signed combined PATCH request from
  * @property {SignedRequest} listApplicationRequest The request to be made to list the available applications
  */
 /**
@@ -36,13 +37,19 @@
 
         window.havenOnDemandSso.authenticate(function(error, output) {
             if (error) {
-                if (error.type === window.havenOnDemandSso.ERROR_TYPES.CROSS_DOMAIN_COOKIES) {
-                    window.location = applicationRoot + CONFIG.cookieErrorPage;
+                var statusCode;
+
+                if (error.type === window.havenOnDemandSso.ERROR_TYPES.NO_USER_TOKEN) {
+                    statusCode = 500;
                 } else if (error.type === window.havenOnDemandSso.ERROR_TYPES.NO_USERS_AUTHORISED) {
-                    window.location = applicationRoot + CONFIG.errorPage + '?statusCode=403';
+                    statusCode = 403;
+                } else if (error.type === window.havenOnDemandSso.ERROR_TYPES.SSO) {
+                    statusCode = 401;
                 } else {
-                    window.location = applicationRoot + CONFIG.errorPage + '?statusCode=' + error.status;
+                    statusCode = error.status || 500;
                 }
+
+                window.location.assign(applicationRoot + CONFIG.errorPage + '?statusCode=' + statusCode);
             } else {
                 var combinedToken = output.combinedToken;
                 var inputsFragment = document.createDocumentFragment();
@@ -62,9 +69,10 @@
             listApplicationRequest: CONFIG.listApplicationRequest,
             applicationRoot: applicationRoot,
             ssoPage: CONFIG.ssoPage,
+            combinedPatchRequestApi: CONFIG.combinedPatchRequestApi,
             combinedRequestApi: CONFIG.combinedRequestApi
         });
 
-        form.setAttribute("action", applicationRoot + CONFIG.authenticatePath);
+        form.setAttribute('action', applicationRoot + CONFIG.authenticatePath);
     });
 })();
