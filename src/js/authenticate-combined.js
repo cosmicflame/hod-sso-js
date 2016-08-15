@@ -8,13 +8,13 @@
 
     /**
      * This script assumes that if the page has this query parameter, the user has already been to the SSO page.
-     * @type {String}
+     * @type {string}
      */
     var AUTHENTICATED_PARAMETER = 'authenticated';
 
     /**
      * Used for query parameter values.
-     * @type {String}
+     * @type {string}
      */
     var TRUE_STRING = 'true';
 
@@ -26,7 +26,7 @@
 
     /**
      * Possible values of the type property for {@link SsoError}s called back from functions exposed by this script.
-     * @enum {String}
+     * @enum {string}
      * @readonly
      */
     var ERROR_TYPES = {
@@ -43,9 +43,14 @@
         HOD: 'HOD',
 
         /**
-         * A function in this script suspects that cross-domain cookies are disabled in the user's browser.
+         * The SSO page called back an error to the redirect URL. The error string will be included in the called back error.
          */
-        CROSS_DOMAIN_COOKIES: 'CROSS_DOMAIN_COOKIES',
+        SSO : 'SSO',
+
+        /**
+         * The user has successfully visiting the SSO page but HOD still thinks they have no token.
+         */
+        NO_USER_TOKEN: 'NO_USER_TOKEN',
 
         /**
          * During authentication there were no user/application pairs to use to create a combined token.
@@ -54,9 +59,10 @@
     };
 
     /**
-     * Parse a location search string (eg "?foo=1&bar=cat&bar=dog") into an object of string keys to an array of values.
-     * @param {String} search
-     * @return {Object<String, String[]>}
+     * Parse a location search string (eg "?foo=1&bar=cat&bar=dog") into an object of string keys to a string value. The
+     * first value for a given key is used.
+     * @param {string} search
+     * @return {Object<string, string>}
      */
     function parseQueryString(search) {
         if (search === '') {
@@ -71,28 +77,26 @@
                 })
                 .reduce(function(output, pair) {
                     var key = pair[0];
-                    output[key] = (output[key] || []).concat(pair[1]);
+
+                    if (!output[key]) {
+                        output[key] = pair[1];
+                    }
+
                     return output;
                 }, {});
         }
     }
 
     /**
-     * Build a URL encoded query string from a map of key to values.
-     * @param {Object.<String, String[]>} parameters
-     * @return {String}
+     * Build a URL encoded query string from a map of key to value.
+     * @param {Object.<string, string>} parameters
+     * @return {string}
      */
     function buildQueryString(parameters) {
         return Object.keys(parameters)
-            .reduce(function(pairStrings, key) {
-                var encodedKey = encodeURIComponent(key);
-
-                var pairsForKey = parameters[key].map(function(value) {
-                    return [encodedKey, encodeURIComponent(value)].join('=');
-                });
-
-                return pairStrings.concat(pairsForKey);
-            }, [])
+            .map(function(key) {
+                return [key, parameters[key]].map(encodeURIComponent).join('=');
+            })
             .join('&');
     }
 
@@ -100,7 +104,7 @@
      * Add a ready state change listener to an XMLHttpRequest. When the request is done, the callback is called. Assumes
      * a JSON response.
      * @param {XMLHttpRequest} xhr
-     * @param {String} errorType The type of error to return if a non-200 response is received {@link ERROR_TYPES}
+     * @param {string} errorType The type of error to return if a non-200 response is received {@link ERROR_TYPES}
      * @param {Function} callback Called with an error response and status if there is one or null and the parsed response
      */
     function addReadyStateChangeListener(xhr, errorType, callback) {
@@ -130,13 +134,18 @@
     /**
      * Make a signed request to HOD, calling the callback when it is done.
      * @param {SignedRequest} request
+     * @param {string} userToken May be null
      * @param {Function} callback
      */
-    function makeSignedRequest(request, callback) {
+    function makeSignedRequest(request, userToken, callback) {
         var xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
         xhr.open(request.verb, request.url);
         xhr.setRequestHeader('token', request.token);
+
+        if (userToken !== null) {
+            xhr.setRequestHeader('cmb_sso_tkn', userToken);
+        }
 
         if (request.body) {
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -174,9 +183,10 @@
      */
     /**
      * @typedef {Object} SsoError
-     * @property {String} type One of {@link ERROR_TYPES}
-     * @property {Number} [status] Status code of the HTTP request which failed, if there was one
+     * @property {string} type One of {@link ERROR_TYPES}
+     * @property {number} [status] Status code of the HTTP request which failed, if there was one
      * @property {Object} [response] Response of the HTTP request which failed, if there was one
+     * @property {string} [errorParameter] Value of the error parameter called back from the SSO page, if there was one
      */
 
     /**
@@ -187,13 +197,15 @@
      * @property {Object} combinedToken
      */
     /**
+     * If listApplicationRequest is provided, the listApplicationRequestApi endpoint will not be called.
      * @typedef {Object} AuthenticateOptions
      * @property {string} applicationRoot Root path of application
      * @property {string} [hodDomain] HOD Domain, defaults to havenondemand.com
      * @property {string} [ssoPage] URL of HOD SSO page, defaults to https://dev.havenondemand.com/sso.html. In case that provided, overrides the hodDomain value for the SSO page redirection.
+     * @property {string} [combinedPatchRequestApi=/api/combined-patch-request] The URI to obtain the signature of a combined PATCH request to make from the SSO page
      * @property {SignedRequest} [listApplicationRequest] A signed request to get a list of applications
-     * @property {string} [combinedRequestApi=/api/combined-request] The URI to obtain the signed authentication request from
      * @property {string} [listApplicationRequestApi=/api/list-application-request] The URI to obtain the signed list application request from
+     * @property {string} [combinedRequestApi=/api/combined-request] The URI to obtain the signed authentication request from
      */
     /**
      * @callback AuthenticateCallback
@@ -208,45 +220,60 @@
      * @param {AuthenticateOptions} options Configuration options
      */
     function authenticate(callback, options) {
-        options = options || {};
         var applicationRoot = options.applicationRoot;
         var hodDomain = options.hodDomain || DEFAULT_HOD_DOMAIN;
         var ssoPage = options.ssoPage || 'https://dev.' + hodDomain + '/sso.html';
         var combinedRequestApi = options.combinedRequestApi || '/api/combined-request';
         var listApplicationRequestApi = options.listApplicationRequestApi || '/api/list-application-request';
-
-        function handleHodErrorResponse(httpError, callback) {
-            var response = httpError.response;
-
-            if (response && response.error === NO_USER_TOKEN_CODE) {
-                var authenticatedParameterValues = parseQueryString(location.search)[AUTHENTICATED_PARAMETER];
-
-                if (authenticatedParameterValues && authenticatedParameterValues.indexOf(TRUE_STRING) !== -1) {
-                    // The user has been to dev console but we still don't have a valid unbound token. This is probably
-                    // because the browser doesn't allow cross-domain cookies.
-                    callback({type: ERROR_TYPES.CROSS_DOMAIN_COOKIES});
-                } else {
-                    // Include the current location query parameters in the dev console redirect URL
-                    var redirectQueryParameters = parseQueryString(location.search);
-
-                    // Add a query parameter to the redirect URL to indicate that the user has been to dev console
-                    redirectQueryParameters[AUTHENTICATED_PARAMETER] = [TRUE_STRING];
-
-                    var redirectUrl = location.protocol + '//' + location.host + location.pathname + '?' + buildQueryString(redirectQueryParameters);
-
-                    // The user's unbound token is invalid and we haven't sent them to dev console before, so send them there now
-                    window.location = ssoPage + '?' + buildQueryString({redirect_url: [redirectUrl]});
-                }
-            } else {
-                callback(httpError);
-            }
-        }
+        var combinedPatchRequestApi = options.combinedPatchRequestApi || '/api/combined-patch-request';
 
         function authenticateWithListRequest(listApplicationRequest) {
+            var queryParameters = parseQueryString(location.search);
+
+            // Check if there is a user token in the query parameters; if there is, use it for all requests to HOD
+            var userToken;
+
+            if (queryParameters.type && queryParameters.id && queryParameters.secret) {
+                userToken = [queryParameters.type, queryParameters.id, queryParameters.secret].join(':');
+            } else {
+                userToken = null;
+            }
+
+            function handleHodErrorResponse(httpError, callback) {
+                var response = httpError.response;
+
+                if (queryParameters.error) {
+                    // The SSO page called back an error in the query parameters
+                    callback({type: ERROR_TYPES.SSO, errorParameter: queryParameters.error});
+                } else if (response && response.error === NO_USER_TOKEN_CODE) {
+                    if (queryParameters[AUTHENTICATED_PARAMETER] === TRUE_STRING) {
+                        // The user has successfully been to the SSO page but HOD can't find their unbound token
+                        callback({type: ERROR_TYPES.NO_USER_TOKEN});
+                    } else {
+                        var redirectUrl = location.protocol + '//' + location.host + location.pathname;
+
+                        // Fetch the signature of a combined PATCH request to forward to the SSO page
+                        getSignedRequest(applicationRoot + combinedPatchRequestApi + '?' + buildQueryString({'redirect-url': redirectUrl}), function(httpError, request) {
+                            if (httpError) {
+                                callback(httpError);
+                            } else {
+                                // The user has no unbound token and we haven't sent them to the SSO page before, so send them there now
+                                window.location.assign(ssoPage + '?' + buildQueryString({
+                                    app_token: request.token,
+                                    redirect_url: redirectUrl
+                                }));
+                            }
+                        });
+                    }
+                } else {
+                    callback(httpError);
+                }
+            }
+
             // Get a list of applications and users which match the authentication
-            makeSignedRequest(listApplicationRequest, function(error, response) {
-                if (error) {
-                    handleHodErrorResponse(error, callback);
+            makeSignedRequest(listApplicationRequest, userToken, function(httpError, response) {
+                if (httpError) {
+                    handleHodErrorResponse(httpError, callback);
                 } else if (!response.length || !response[0].users.length) {
                     // There are no user/application pairs to create a combined token from
                     callback({type: ERROR_TYPES.NO_USERS_AUTHORISED});
@@ -268,20 +295,21 @@
                     var accounts = response[0].users[0].accounts;
 
                     var combinedTokenParameters = buildQueryString({
-                        domain: [application.domain],
-                        application: [application.name],
-                        'user-store-domain': [userStore.domain],
-                        'user-store-name': [userStore.name]
+                        domain: application.domain,
+                        application: application.name,
+                        'user-store-domain': userStore.domain,
+                        'user-store-name': userStore.name
                     });
 
-                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + combinedTokenParameters, function(error, combinedRequest) {
-                        if (error) {
-                            callback(error);
+                    // Sign the authenticate combined request via the backend
+                    getSignedRequest(applicationRoot + combinedRequestApi + '?' + combinedTokenParameters, function(httpError, combinedRequest) {
+                        if (httpError) {
+                            callback(httpError);
                         } else {
-                            // Obtain a combined token
-                            makeSignedRequest(combinedRequest, function(error, response) {
-                                if (error) {
-                                    handleHodErrorResponse(error, callback);
+                            // Make the signed request to obtain a combined token
+                            makeSignedRequest(combinedRequest, userToken, function(httpError, response) {
+                                if (httpError) {
+                                    handleHodErrorResponse(httpError, callback);
                                 } else {
                                     var combinedToken = response.token;
 
@@ -302,6 +330,7 @@
         if (options.listApplicationRequest) {
             authenticateWithListRequest(options.listApplicationRequest);
         } else {
+            // If a signed list application request was not provided, fetch it from the backend first
             getSignedRequest(applicationRoot + listApplicationRequestApi, function(error, listApplicationRequest) {
                 if (error) {
                     callback(error);
@@ -314,11 +343,11 @@
 
     /**
      * @typedef {Object} LogoutOptions
-     * @property {String} combinedToken The combined token string to use to log out
-     * @property {String} [hodDomain=havenondemand.com] Domain for Haven OnDemand endpoint
-     * @property {String} [hodEndpoint=https://api.havenondemand.com] Haven OnDemand endpoint, overrides the hodDomain
+     * @property {string} combinedToken The combined token string to use to log out
+     * @property {string} [hodDomain=havenondemand.com] Domain for Haven OnDemand endpoint
+     * @property {string} [hodEndpoint=https://api.havenondemand.com] Haven OnDemand endpoint, overrides the hodDomain
      * if supplied
-     * @property {String} [logoutUrl=https://api.havenondemand.com/2/authenticate/combined] URL for the logout request,
+     * @property {string} [logoutUrl=https://api.havenondemand.com/2/authenticate/combined] URL for the logout request,
      * overrides the hodEndpoint if supplied
      */
     /**

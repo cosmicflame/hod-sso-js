@@ -4,8 +4,8 @@
  */
 /**
  * @typedef {Object} LogoutConfig
- * @property {String} endpoint The Haven OnDemand API endpoint (eg: https://api.havenondemand.com)
- * @property {String} [redirectUrl] URL to redirect to after logout completes
+ * @property {string} endpoint The Haven OnDemand API endpoint (eg: https://api.havenondemand.com)
+ * @property {string} [redirectUrl] URL to redirect to after logout completes
  */
 /**
  * Script for logging the user out of Haven OnDemand. The combined token is obtained from the "token" query parameter,
