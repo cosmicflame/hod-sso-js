@@ -88,21 +88,15 @@
     }
 
     /**
-     * Build a URL encoded query string from a map of key to values.
-     * @param {Object.<string, string[]>} parameters
+     * Build a URL encoded query string from a map of key to value.
+     * @param {Object.<string, string>} parameters
      * @return {string}
      */
     function buildQueryString(parameters) {
         return Object.keys(parameters)
-            .reduce(function(pairStrings, key) {
-                var encodedKey = encodeURIComponent(key);
-
-                var pairsForKey = parameters[key].map(function(value) {
-                    return [encodedKey, encodeURIComponent(value)].join('=');
-                });
-
-                return pairStrings.concat(pairsForKey);
-            }, [])
+            .map(function(key) {
+                return [key, parameters[key]].map(encodeURIComponent).join('=');
+            })
             .join('&');
     }
 
@@ -259,14 +253,14 @@
                         var redirectUrl = location.protocol + '//' + location.host + location.pathname;
 
                         // Fetch the signature of a combined PATCH request to forward to the SSO page
-                        getSignedRequest(applicationRoot + combinedPatchRequestApi + '?' + buildQueryString({'redirect-url': [redirectUrl]}), function(httpError, request) {
+                        getSignedRequest(applicationRoot + combinedPatchRequestApi + '?' + buildQueryString({'redirect-url': redirectUrl}), function(httpError, request) {
                             if (httpError) {
                                 callback(httpError);
                             } else {
                                 // The user has no unbound token and we haven't sent them to the SSO page before, so send them there now
                                 window.location.assign(ssoPage + '?' + buildQueryString({
-                                    app_token: [request.token],
-                                    redirect_url: [redirectUrl]
+                                    app_token: request.token,
+                                    redirect_url: redirectUrl
                                 }));
                             }
                         });
@@ -301,10 +295,10 @@
                     var accounts = response[0].users[0].accounts;
 
                     var combinedTokenParameters = buildQueryString({
-                        domain: [application.domain],
-                        application: [application.name],
-                        'user-store-domain': [userStore.domain],
-                        'user-store-name': [userStore.name]
+                        domain: application.domain,
+                        application: application.name,
+                        'user-store-domain': userStore.domain,
+                        'user-store-name': userStore.name
                     });
 
                     // Sign the authenticate combined request via the backend
